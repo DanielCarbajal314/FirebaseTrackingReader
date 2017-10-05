@@ -1,0 +1,84 @@
+ <!DOCTYPE html>
+ <meta charset="ISO-8859-1"> 
+<html>
+<head>
+	<title>FOAF</title>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="./js/graph.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="./styles/graph.css">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://www.gstatic.com/firebasejs/4.1.1/firebase.js"></script>
+</head>
+<body>
+    <div class="row col-sm-12">
+            <div id="svg-body" class="panel-body"></div>
+    </div>
+</body>
+<script>
+	var config = {
+                        databaseURL: 'https://realtimetest-4e4b2.firebaseio.com/'
+     };
+	firebase.initializeApp(config);
+	
+	var mainRoot = firebase.database().ref();
+	
+
+	mainRoot.on('child_added',function(data){
+	  var visitas = data.val().Visitas;
+	  Object.keys(visitas).forEach(function(key) {
+			var visitShortKey = getLast5Characters(key);
+			var fatherNodeShorKey = getLast5Characters(data.key);
+			createTriple(fatherNodeShorKey,"LandingRegistry",visitShortKey);
+			var visitData = visitas[key];
+			addVisit(visitShortKey,visitData);
+	  });	
+	  updateGraphic();
+	});
+
+    var svg = d3.select("#svg-body")
+                .append("svg")
+				.attr("width", 1900)
+				.attr("height", 900);
+	var force = d3.layout.force().size([1900, 900]);
+    var graph;
+    var triples = [];
+	
+    function updateGraphic(){
+        graph = triplesToGraph(triples);
+        update();
+    }
+
+    function Triple(){
+        this.subject="";
+        this.predicate="";
+        this.object="";
+        return this;
+    }
+	
+	function addVisit(nodeName,visitData){
+		if (visitData){
+			Object.keys(visitData).forEach(function(key) {
+				createTriple(nodeName,key,visitData[key]);
+			});	
+		}
+	}
+	
+	function createTriple(subject,predicate,object){
+		var triple = new Triple();
+		triple.subject = subject;
+        triple.predicate = predicate;
+        triple.object = object;
+		triples.push(triple);
+	}
+	
+	function getLast5Characters(word){
+		return word.substr(word.length - 5);
+	}
+
+</script>
+    
+</html> 
+
+
